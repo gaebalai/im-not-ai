@@ -14,23 +14,37 @@ AI(ChatGPT·Claude·Gemini 등)가 쓴 한글 텍스트를 "사람이 쓴 글처
 ## 디렉토리 구조
 
 ```
-humanize-ko/
-├── CLAUDE.md                      # 본 파일 — 프로젝트 가이드
-├── .claude/
-│   ├── agents/                    # 6인 에이전트 정의
-│   │   ├── korean-ai-tell-taxonomist.md
-│   │   ├── ai-tell-detector.md
-│   │   ├── korean-style-rewriter.md
-│   │   ├── content-fidelity-auditor.md
-│   │   ├── naturalness-reviewer.md
-│   │   └── humanize-web-architect.md
-│   └── skills/humanize-korean/
-│       ├── SKILL.md               # 오케스트레이터
-│       └── references/
-│           ├── ai-tell-taxonomy.md     # SSOT — 10대분류 × 40+ 패턴
-│           ├── rewriting-playbook.md   # 카테고리별 치환 레시피
-│           └── web-service-spec.md     # Phase 5 웹 확장용
-└── _workspace/                    # 런타임 산출물 (run_id별)
+im-not-ai/                          # = Claude Code Plugin 루트
+├── CLAUDE.md                       # 본 파일 — 프로젝트 가이드
+├── .claude-plugin/
+│   └── plugin.json                 # Plugin 매니페스트 (claude /plugin install 용)
+├── agents/                         # ← 정본 (Plugin spec 표준 위치)
+│   ├── korean-ai-tell-taxonomist.md
+│   ├── ai-tell-detector.md
+│   ├── korean-style-rewriter.md
+│   ├── content-fidelity-auditor.md
+│   ├── naturalness-reviewer.md
+│   └── humanize-web-architect.md
+├── skills/humanize-korean/         # ← 정본
+│   ├── SKILL.md                    # 오케스트레이터
+│   └── references/
+│       ├── ai-tell-taxonomy.md     # SSOT — 10대분류 × 40+ 패턴
+│       ├── rewriting-playbook.md   # 카테고리별 치환 레시피
+│       └── web-service-spec.md     # Phase 5 웹 확장용
+├── commands/                       # ← 정본 (슬래시 커맨드 6개)
+│   ├── humanize.md
+│   ├── humanize-detect.md
+│   ├── humanize-redo.md
+│   ├── humanize-status.md
+│   ├── humanize-list.md
+│   └── humanize-web.md
+├── .claude/                        # 이 리포 안에서 직접 `claude` 켤 때를 위한 미러
+│   ├── agents → ../agents          # 심볼릭 링크
+│   ├── skills → ../skills          # 심볼릭 링크
+│   └── commands → ../commands      # 심볼릭 링크
+├── scripts/
+│   └── install.sh                  # `.claude/`에 복사하는 비-Plugin 설치기
+└── _workspace/                     # 런타임 산출물 (run_id별)
     └── {YYYY-MM-DD-NNN}/
         ├── 01_input.txt
         ├── 02_detection.json
@@ -41,6 +55,8 @@ humanize-ko/
         ├── final.md
         └── summary.md
 ```
+
+**듀얼 레이아웃**: 정본은 루트(plugin spec), 동시에 `.claude/`에 심볼릭 링크 미러를 둬 plugin 등록 없이 이 리포 안에서 `claude` 켜는 흐름도 그대로 유지.
 
 ## 파이프라인
 
@@ -111,6 +127,6 @@ humanize-ko/
 
 ## 참고
 
-- 분류 체계: `.claude/skills/humanize-korean/references/ai-tell-taxonomy.md`
-- 윤문 처방: `.claude/skills/humanize-korean/references/rewriting-playbook.md`
-- 웹 스펙: `.claude/skills/humanize-korean/references/web-service-spec.md`
+- 분류 체계: `skills/humanize-korean/references/ai-tell-taxonomy.md` (또는 미러 `.claude/skills/humanize-korean/references/ai-tell-taxonomy.md`)
+- 윤문 처방: `skills/humanize-korean/references/rewriting-playbook.md`
+- 웹 스펙: `skills/humanize-korean/references/web-service-spec.md`

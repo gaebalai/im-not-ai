@@ -113,7 +113,9 @@ cd im-not-ai
 claude
 ```
 
-> **중요:** 꼭 `im-not-ai` 폴더 **안에서** 실행하세요. 다른 위치에서 켜면 이 리포의 스킬이 로드되지 않아 일반 Claude Code처럼 동작합니다.
+> **중요:** 꼭 `im-not-ai` 폴더 **안에서** 실행하세요. 다른 위치에서 켜면 이 리포의 스킬이 로드되지 않아 일반 Claude Code처럼 동작합니다 (`.claude/`가 미러 심볼릭 링크로 자동 인식됨).
+>
+> **다른 프로젝트에 끌어다 쓰고 싶다면** 두 가지 길이 있습니다 — Claude Code Plugin (`/plugin install`) 또는 Bash 설치 스크립트. 자세한 건 [설치 섹션](#설치--내-프로젝트--글로벌에-끌어다-쓰기).
 
 ### 3. AI가 쓴 한글 글 붙여넣고 부탁하기
 
@@ -167,6 +169,93 @@ Claude Code가 이 순서로 처리합니다:
 ### 6. 다른 글로 또 돌리고 싶을 때
 
 Claude Code 세션 안에서 새 글을 붙여넣고 똑같이 부탁하면 됩니다. 실행마다 새 `_workspace/{날짜-번호}/` 폴더가 만들어져 이전 결과와 섞이지 않습니다.
+
+## 설치 — 내 프로젝트 / 글로벌에 끌어다 쓰기
+
+두 가지 방식 중 편한 쪽을 고르세요.
+
+### 방식 A — Claude Code Plugin (권장)
+
+이 리포는 Claude Code 공식 Plugin 규격(`.claude-plugin/plugin.json` + `marketplace.json` + 루트 `agents/`·`skills/`·`commands/`)을 모두 갖춘 자체 marketplace입니다. 두 줄로 설치 끝.
+
+```bash
+# Claude Code 세션 안에서:
+/plugin marketplace add epoko77-ai/im-not-ai          # GitHub repo 단축 문법
+/plugin install humanize-korean@epoko77-ai-plugins    # plugin@marketplace
+```
+
+- **마켓플레이스 이름**: `epoko77-ai-plugins` (수정하려면 [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json)의 `name` 필드만 변경)
+- **플러그인 이름**: `humanize-korean` (네임스페이싱 — 다른 marketplace의 동명 plugin과 충돌하지 않음)
+- **자동 업데이트**: Git 변경 시 `/plugin update` 로 갱신
+- **팀 공유**: `.claude/settings.json` 에 한 줄로 marketplace 등록 명시 가능
+
+로컬 개발 중인 plugin을 바로 테스트하려면 (이 리포를 클론한 상태에서):
+```bash
+cd ~/path/to/im-not-ai
+claude --plugin-dir .
+```
+
+### 방식 B — Bash 설치 스크립트 (Plugin 안 쓰는 환경용)
+
+대상 디렉토리의 `.claude/`에 직접 복사합니다. Plugin marketplace에 의존하지 않고, 이 리포를 fork·커스터마이징해 쓰는 사용자에게 적합합니다. 의존성 없는 Bash 스크립트입니다 (Mac/Linux/WSL).
+
+```bash
+# 1) 이 리포 클론
+git clone https://github.com/epoko77-ai/im-not-ai.git
+cd im-not-ai
+
+# 2) 현재 작업 디렉토리(다른 프로젝트)로 이동 후 설치
+cd ~/my-other-project
+~/path/to/im-not-ai/scripts/install.sh
+
+# 또는 한 줄로
+~/path/to/im-not-ai/scripts/install.sh --target ~/my-other-project
+```
+
+### 자주 쓰는 옵션
+
+| 명령 | 동작 |
+|------|------|
+| `install.sh` | 현재 디렉토리의 `.claude/`에 복사 |
+| `install.sh --target <경로>` | 지정 디렉토리에 복사 |
+| `install.sh --global` | `~/.claude/`에 글로벌 설치 (어느 프로젝트에서든 사용 가능) |
+| `install.sh --mode symlink` | 복사 대신 심볼릭 링크 (이 리포가 업데이트되면 자동 반영) |
+| `install.sh --components commands` | 슬래시 커맨드만 (에이전트·스킬 제외) |
+| `install.sh --dry-run` | 실제로 쓰지 않고 무엇을 할지만 표시 |
+| `install.sh --uninstall --target <경로>` | 이 도구로 설치된 것만 제거 |
+| `install.sh --help` | 전체 도움말 |
+
+### 안전장치
+
+- **자동 백업** — 같은 이름 파일이 있으면 `*.bak.<타임스탬프>`로 백업 후 새로 깖. `--force` 시만 백업 없이 덮어씀.
+- **매니페스트 추적** — `<대상>/.claude/.humanize-kr-installed`에 설치된 파일 목록을 기록. `--uninstall`은 이 목록만 지우므로 사용자가 수동으로 추가한 다른 에이전트/스킬은 안전.
+- **자기 자신 설치 방지** — 소스와 대상이 같으면 거부.
+- **부분 설치** — `--components agents` / `skills` / `commands` 조합 가능.
+
+### 글로벌 vs 로컬, 어느 쪽?
+
+- **로컬(기본)**: 이 프로젝트에서만 윤문기를 쓰고 싶을 때. 프로젝트별 격리됨.
+- **글로벌(`--global`)**: 어느 디렉토리에서 `claude`를 켜도 윤문이 가능. 단, `~/.claude/`에 다른 자산이 있으면 충돌 위험 → 백업이 자동으로 잡히지만 충돌 메시지를 확인하세요.
+- **심볼릭 링크(`--mode symlink`)**: 이 리포 폴더를 절대 옮기지 않을 때만 권장. 옮기면 링크가 깨집니다.
+
+## 슬래시 커맨드 (정밀 제어용)
+
+> **기여 표기:** 이 섹션의 6개 슬래시 커맨드([.claude/commands/](.claude/commands/))는 **Jaewoo Kim** 이 원저작자 동의 하에 추가한 것입니다. MIT 라이선스를 따릅니다.
+
+자연어 트리거("AI 티 없애줘") 외에, 단계를 직접 제어하고 싶을 때 쓰는 6개 커맨드입니다. Claude Code에서 `/`만 누르면 자동완성됩니다.
+
+| 커맨드 | 용도 | 예시 |
+|--------|------|------|
+| [`/humanize`](.claude/commands/humanize.md) | 풀 파이프라인 (탐지 → 윤문 → 검증) | `/humanize [텍스트 또는 파일경로]` |
+| [`/humanize-detect`](.claude/commands/humanize-detect.md) | 탐지만 (윤문 X) — 어디가 AI 티인지 진단 | `/humanize-detect [텍스트]` |
+| [`/humanize-redo`](.claude/commands/humanize-redo.md) | 가장 최근 결과 2차 윤문·부분 재실행 | `/humanize-redo 번역투만 다시` |
+| [`/humanize-status`](.claude/commands/humanize-status.md) | 최근(또는 지정) run 결과 다시 보기 | `/humanize-status 2026-04-25-001` |
+| [`/humanize-list`](.claude/commands/humanize-list.md) | 과거 실행 목록을 표로 비교 | `/humanize-list 10` |
+| [`/humanize-web`](.claude/commands/humanize-web.md) | 웹 서비스(Next.js+Vercel) 설계 문서 생성 | `/humanize-web 익명 MVP만` |
+
+**언제 슬래시를, 언제 자연어를 쓸까**
+- 그냥 윤문하고 싶다 → 자연어 한 문장이 가장 빠릅니다.
+- "탐지만 해줘", "강도 낮춰서", "이전 결과만 다시 보고 싶다" 같은 **단계·옵션 제어**가 필요할 때 슬래시 커맨드를 쓰세요.
 
 ## Do-NOT List (탐지·윤문 대상 제외)
 
